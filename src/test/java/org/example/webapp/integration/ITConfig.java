@@ -39,10 +39,26 @@ public class ITConfig {
     }
 
     private DesiredCapabilities getDesiredCapabilities() {
-        return DesiredCapabilities.firefox();
+
+        final DesiredCapabilities capabilities = DesiredCapabilities.firefox();
+        if (useSauceLabs()) {
+            capabilities.setCapability("tunnel-identifier", env.getProperty("TRAVIS_JOB_NUMBER"));
+            capabilities.setCapability("seleniumVersion", env.getProperty("selenium.version"));
+        }
+
+        return capabilities;
+    }
+
+    private boolean useSauceLabs() {
+        return env.getProperty("SAUCE_USERNAME") != null;
     }
 
     private URL getRemoteUrl() throws MalformedURLException {
-        return new URL("http://localhost:4445/wd/hub");
+        if (useSauceLabs()) {
+            return new URL(String.format("http://%s:%s@localhost:4445/wd/hub",
+                    env.getProperty("SAUCE_USERNAME"), env.getProperty("SAUCE_ACCESS_KEY")));
+        } else {
+            return new URL("http://localhost:4445/wd/hub");
+        }
     }
 }
